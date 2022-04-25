@@ -86,23 +86,27 @@ def find_vaccines(driver):
     wait.until(ec.presence_of_all_elements_located((By.XPATH, '//*[@id="main-content"]/app-appointment-table/ion-content/div/div/ion-grid/ion-row/ion-grid/ion-row/ion-col/ion-grid/ion-row/ion-col[2]/form/ion-grid/ion-row/ion-col[6]/div/div/mat-selection-list/div[4]/mat-list-option/div/div[2]/ion-row/ion-col[1]/div/h5')))
     wait.until(ec.presence_of_all_elements_located((By.XPATH, '//*[@id="main-content"]/app-appointment-table/ion-content/div/div/ion-grid/ion-row/ion-grid/ion-row/ion-col/ion-grid/ion-row/ion-col[2]/form/ion-grid/ion-row/ion-col[6]/div/div/mat-selection-list/div[1]/mat-list-option/div/div[2]/ion-row/ion-col[2]/ul')))
     wait.until(ec.presence_of_all_elements_located((By.XPATH, "//li")))
-    
+
     vaccine_rows = driver.find_elements_by_xpath(query)
-    
+
     for vaccine_row in vaccine_rows:
         vaccine_center = vaccine_row
         vaccine_center_name = vaccine_center.find_element_by_xpath(".//h5[@class='center-name-title']").get_attribute('textContent')
         vaccine_slot_avail_ul = vaccine_center.find_element_by_xpath(".//ul[@class='slot-available-wrap']")
-        vaccine_info_about_slots = []
         vaccine_slot_li = vaccine_slot_avail_ul.find_elements_by_tag_name("li")
-        for vaccine_slot in vaccine_slot_li:
-            vaccine_info_about_slots.append(vaccine_slot.find_element_by_tag_name("a").get_attribute('textContent'))
+        vaccine_info_about_slots = [
+            vaccine_slot.find_element_by_tag_name("a").get_attribute(
+                'textContent'
+            )
+            for vaccine_slot in vaccine_slot_li
+        ]
+
         final_info_grabbed = f"      >>> Vaccine Centre: {vaccine_center_name} -> Info(+7) "
         for vaccine_slot in vaccine_info_about_slots:
-            final_info_grabbed += vaccine_slot + " "
+            final_info_grabbed += f"{vaccine_slot} "
         all_vaccine_info.append((vaccine_center_name, vaccine_info_about_slots))
         print(final_info_grabbed)
- 
+
 
     return all_vaccine_info
 
@@ -111,8 +115,8 @@ def check_vaccines(driver, vaccine_info):
     for i in range(len(vaccine_info)):
         for x in range(len(vaccine_info[i][1])):
             vaccine_info_fetched_text = vaccine_info[i][1][x]
-            txt = "" + vaccine_info_fetched_text
-            if vaccine_info_fetched_text == "NA" or vaccine_info_fetched_text == "Booked":
+            txt = f"{vaccine_info_fetched_text}"
+            if vaccine_info_fetched_text in ["NA", "Booked"]:
                 continue
             elif txt.isnumeric():
                 list_of_vaccines.append(i)
@@ -177,10 +181,7 @@ def GetOTP():
     all_msg_txt = driver.find_elements_by_xpath(query)
 
     unfiltered_OTP = all_msg_txt[len(all_msg_txt)-1].text
-    OTP = []
-    for word in unfiltered_OTP:
-        if word.isdigit():
-            OTP.append(int(word))
+    OTP = [int(word) for word in unfiltered_OTP if word.isdigit()]
     OTP.pop()
     print(">> Received OTP")
     return OTP
@@ -252,7 +253,7 @@ def Login():
 
 counting_entries = 1;
 
-while(vaccine_found == False):
+while (vaccine_found == False):
     if driver.current_url != "https://selfregistration.cowin.gov.in/dashboard":
         print(">> User is logged out!    Trying to log back in 10 seconds...")
         sleep(10)
@@ -281,11 +282,11 @@ while(vaccine_found == False):
         vaccine_found = True
         print("\n\n\nFound vaccine(s)!!!!")
         for index in list_of_vaccines_index:
-            print("      >>> " + vaccine_info[index][0])
+            print(f"      >>> {vaccine_info[index][0]}")
         vaccine_found = True
         PlayAlarm()
     else:
-        print(f"Vaccine not found!     " + f"Retrying in {check_in_x_seconds} seconds..\n")
+        print(f"Vaccine not found!     Retrying in {check_in_x_seconds} seconds..\n")
         sleep(1)
         GoBackToMainPage()
         # if(counting_entries % 6 == 0):
